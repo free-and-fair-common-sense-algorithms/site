@@ -1,0 +1,45 @@
+div.inner_cell {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-flex: 1;
+  flex: 1;
+  overflow: scroll;
+}
+
+div.input {
+  font-size: 0.8rem;
+  page-break-inside: avoid;
+  box-orient: horizontal;
+  box-align: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+div.input_prompt {
+  color: $black;
+  border-top: 1px solid transparent;
+}
+
+div.input_area {
+  border-radius: 0px;
+  border: 1px solid #dadada;
+  background: #FBFBFB;
+  line-height: 1.21429em;
+}
+
+div.input_area > div.highlight {
+  margin: 0.4rem;
+  border: none;
+  padding: 0px;
+  background-color: transparent;
+}
+
+div.input_area > div.highlight > pre {
+  margin: 0px;
+  border: none;
+  padding: 0px;
+  background-color: transparent;
+}

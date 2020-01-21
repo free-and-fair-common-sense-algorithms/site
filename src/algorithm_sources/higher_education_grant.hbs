@@ -1,0 +1,1226 @@
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The intent of this algorithm is to model the dynamic between geographic and institutional factors that contribute to federal grant award amounts in order to produce a fair and accurate recommendation for the grant award amount for the prospective student. The only useful dimensions for determining how much grant award amount are the location of the school, the institution type, and the percentage of the tuition the grant covers for the student, all other factors have the potential to introduce biases into the model and are not relevant for producing a performant model.</p>
+<p>The features of the model will reflect factors about the educational institution, and the target is the percentage amount of the tuition was covered by the federal grant.</p>
+<h4 id="Training-data:">Training data:<a class="anchor-link" href="#Training-data:">&#182;</a></h4><ul>
+<li><a href="https://trends.collegeboard.org/content/sources-grant-aid-full-time-undergraduates-sector-2011-12">Sources of Grant Aid for Full-Time Undergraduates by Sector, 2011-12 - Pell Grant data</a></li>
+<li><a href="https://studentaid.ed.gov/sa/about/data-center/student/title-iv">Federal Student Aid: Title IV Program Volume Reports - grants per institution</a></li>
+<li><a href="https://catalog.data.gov/dataset/college-scorecard">College Scorecard - tuition data</a> (Accessing this data requires an API key for data.gov, which is granted here: <a href="https://api.data.gov/signup/">https://api.data.gov/signup/</a>)</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="k">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="k">import</span> <span class="n">OneHotEncoder</span>
+<span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="k">import</span> <span class="n">RandomForestRegressor</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="k">import</span> <span class="n">display</span>
+
+<span class="kn">from</span> <span class="nn">sklearn_transformers.preprocessing</span> <span class="k">import</span> <span class="n">FeatureSelector</span>
+<span class="kn">from</span> <span class="nn">sklearn_transformers.preprocessing</span> <span class="k">import</span> <span class="n">MultiColumnLabelEncoder</span>
+<span class="kn">from</span> <span class="nn">sklearn_transformers.regression</span> <span class="k">import</span> <span class="n">RegressorWithNoise</span>
+<span class="kn">import</span> <span class="nn">regression_report</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Download-data:">Download data:<a class="anchor-link" href="#Download-data:">&#182;</a></h3><p>To model the scenario outlined above, the data required is an anonymized individual-level federal grant award dataset (where each row represents one person’s school, the school’s tuition, and the percent of the tuition the grant amount covered). Unfortunately, the government does readily provide such a dataset, however, these features can be assembled with other existing datasets: the Pell Grant data for full-time undergraduate students which provides the maximum amount awarded per student, the Federal Student Aid's Title IV program which outlines the total amount of grants per educational institution, and lastly the educational institution's tuition provided by College Scorecard.</p>
+<p>The first dataset (Sources of Grant Aid for Full-Time Undergraduates by Sector, 2011-12), will provide the maximum Pell Grant amounts awarded per year. The maximum amount award will later be used to determine the percent awarded.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pell_grat_filename</span> <span class="o">=</span> <span class="s1">&#39;pell_grant.xlsx&#39;</span>
+<span class="n">pell_grant_url</span> <span class="o">=</span> <span class="s1">&#39;http://research.collegeboard.org/sites/default/files/sa-2018-figure-21a.xlsx&#39;</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pell_grant_url</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pell_grat_filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_file</span><span class="p">:</span>
+    <span class="n">out_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">parse_pell_grant_data_start_year</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">s</span> <span class="o">&gt;=</span> <span class="mi">77</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1900</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2000</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span>
+
+<span class="n">pell_grant_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
+    <span class="n">pell_grat_filename</span><span class="p">,</span>
+    <span class="n">header</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)],</span>
+    <span class="n">nrows</span><span class="o">=</span><span class="mi">41</span>
+<span class="p">)</span>
+<span class="n">pell_grant_data</span><span class="p">[</span><span class="s1">&#39;start_year&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pell_grant_data</span><span class="p">[</span><span class="s1">&#39;Academic Year&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">parse_pell_grant_data_start_year</span><span class="p">)</span>
+<span class="n">pell_grant_data</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">pell_grant_data</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pell_grant_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">pell_grant_data</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>(41, 4)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>academic_year</th>
+      <th>maximum_pell_grant</th>
+      <th>average_pell_grant_per_recipient</th>
+      <th>start_year</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>24</th>
+      <td>01-02</td>
+      <td>5170</td>
+      <td>3170</td>
+      <td>2001</td>
+    </tr>
+    <tr>
+      <th>34</th>
+      <td>11-12</td>
+      <td>6010</td>
+      <td>3850</td>
+      <td>2011</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>89-90</td>
+      <td>4530</td>
+      <td>2830</td>
+      <td>1989</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>92-93</td>
+      <td>4180</td>
+      <td>2690</td>
+      <td>1992</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>91-92</td>
+      <td>4310</td>
+      <td>2750</td>
+      <td>1991</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The second dataset is the Federal Student Aid Title IV Volume reports that detail grand disbursements per institution per year (from <a href="https://studentaid.ed.gov/sa/about/data-center/student/title-iv">https://studentaid.ed.gov/sa/about/data-center/student/title-iv</a>). The Q4 data has the complete data for the given year.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">base_url</span> <span class="o">=</span> <span class="s1">&#39;https://studentaid.gov/sites/default/files/&#39;</span>
+<span class="n">student_loans_data_urls</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">18</span><span class="p">):</span>
+    <span class="n">this_year</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{year}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">next_year</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;{year + 1}&#39;</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="mi">13</span> <span class="o">&lt;=</span> <span class="n">year</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{base_url}</span><span class="s1">fsawg/datacenter/library/&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">base_url</span>
+    <span class="n">student_loans_data_urls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{url}</span><span class="s1">Q4</span><span class="si">{this_year}{next_year}</span><span class="s1">AY.xls&#39;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">student_loans_data_urls</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_file</span><span class="p">:</span>
+        <span class="n">out_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>https://studentaid.gov/sites/default/files/Q40607AY.xls
+https://studentaid.gov/sites/default/files/Q40708AY.xls
+https://studentaid.gov/sites/default/files/Q40809AY.xls
+https://studentaid.gov/sites/default/files/Q40910AY.xls
+https://studentaid.gov/sites/default/files/Q41011AY.xls
+https://studentaid.gov/sites/default/files/Q41112AY.xls
+https://studentaid.gov/sites/default/files/Q41213AY.xls
+https://studentaid.gov/sites/default/files/fsawg/datacenter/library/Q41314AY.xls
+https://studentaid.gov/sites/default/files/fsawg/datacenter/library/Q41415AY.xls
+https://studentaid.gov/sites/default/files/fsawg/datacenter/library/Q41516AY.xls
+https://studentaid.gov/sites/default/files/fsawg/datacenter/library/Q41617AY.xls
+https://studentaid.gov/sites/default/files/fsawg/datacenter/library/Q41718AY.xls
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">grant_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;Q4*AY.xls&#39;</span><span class="p">)):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+    <span class="n">sheetname</span> <span class="o">=</span> <span class="p">[</span><span class="n">sheetname</span> <span class="k">for</span> <span class="n">sheetname</span> <span class="ow">in</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="s1">&#39; YTD&#39;</span> <span class="ow">in</span> <span class="n">sheetname</span> <span class="ow">or</span> <span class="n">sheetname</span> <span class="o">==</span> <span class="s1">&#39;Award Year Summary&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">header_col</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">sheetname</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">r</span> <span class="o">==</span> <span class="s1">&#39;OPE ID&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">temp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
+        <span class="n">fp</span><span class="p">,</span>
+        <span class="n">sheet_name</span><span class="o">=</span><span class="n">sheetname</span><span class="p">,</span>
+        <span class="n">header</span><span class="o">=</span><span class="p">[</span><span class="n">header_col</span><span class="p">,</span> <span class="n">header_col</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;object&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">col_index</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;Unnamed&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">col</span> <span class="o">==</span> <span class="s1">&#39;FEDERAL PELL GRANT PROGRAM&#39;</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">temp_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span>
+    <span class="n">temp_df</span> <span class="o">=</span> <span class="n">temp_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">col_index</span><span class="p">]</span>
+    <span class="n">temp_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">temp_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">droplevel</span><span class="p">()</span>
+    <span class="n">temp_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">temp_df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="n">temp_df</span> <span class="o">=</span> <span class="n">temp_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;sum of recipients&#39;</span><span class="p">:</span> <span class="s1">&#39;pell grant ytd recipients&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;ytd recipients&#39;</span><span class="p">:</span> <span class="s1">&#39;pell grant ytd recipients&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;sum of disbursements&#39;</span><span class="p">:</span>  <span class="s1">&#39;pell grant ytd disbursements&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;ytd disbursements&#39;</span><span class="p">:</span> <span class="s1">&#39;pell grant ytd disbursements&#39;</span><span class="p">,</span>
+    <span class="p">})</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">temp_df</span><span class="p">[</span><span class="s1">&#39;spreadsheet&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+    <span class="n">temp_df</span><span class="p">[</span><span class="s1">&#39;academic_year&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;20</span><span class="si">{label[2:4]}</span><span class="s1">&#39;</span>
+    <span class="n">temp_df</span><span class="p">[</span><span class="s1">&#39;ope id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_df</span><span class="p">[</span><span class="s1">&#39;ope id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
+    <span class="n">grant_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp_df</span><span class="p">)</span>
+
+
+<span class="n">grants_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">grant_dfs</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">grants_df</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">grants_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Q40607AY.xls
+Q40708AY.xls
+Q40809AY.xls
+Q40910AY.xls
+Q41011AY.xls
+Q41112AY.xls
+Q41213AY.xls
+Q41314AY.xls
+Q41415AY.xls
+Q41516AY.xls
+Q41617AY.xls
+Q41718AY.xls
+(65518, 9)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[43]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ope id</th>
+      <th>school</th>
+      <th>state</th>
+      <th>zip code</th>
+      <th>school type</th>
+      <th>pell grant ytd recipients</th>
+      <th>pell grant ytd disbursements</th>
+      <th>spreadsheet</th>
+      <th>academic_year</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>5294</th>
+      <td>04232400</td>
+      <td>VANTAGE COLLEGE - SAN ANTONIO</td>
+      <td>TX</td>
+      <td>782304823</td>
+      <td>Proprietary</td>
+      <td>163</td>
+      <td>639774</td>
+      <td>Q41516AY</td>
+      <td>2015</td>
+    </tr>
+    <tr>
+      <th>2153</th>
+      <td>00218100</td>
+      <td>MASSACHUSETTS MARITIME ACADEMY</td>
+      <td>MA</td>
+      <td>25323400</td>
+      <td>Public</td>
+      <td>211</td>
+      <td>834973</td>
+      <td>Q41011AY</td>
+      <td>2010</td>
+    </tr>
+    <tr>
+      <th>2793</th>
+      <td>01043400</td>
+      <td>RENTON TECHNICAL COLLEGE</td>
+      <td>WA</td>
+      <td>980564195</td>
+      <td>Public</td>
+      <td>1159</td>
+      <td>3.6932e+06</td>
+      <td>Q41314AY</td>
+      <td>2013</td>
+    </tr>
+    <tr>
+      <th>5549</th>
+      <td>00382300</td>
+      <td>WEST LIBERTY UNIVERSITY</td>
+      <td>WV</td>
+      <td>260740295</td>
+      <td>Public</td>
+      <td>1094</td>
+      <td>4.33732e+06</td>
+      <td>Q40910AY</td>
+      <td>2009</td>
+    </tr>
+    <tr>
+      <th>5307</th>
+      <td>03822400</td>
+      <td>MAPLE SPRINGS BAPTIST BIBLE COLLEGE &amp; SEMINARY</td>
+      <td>MD</td>
+      <td>207435711</td>
+      <td>PRIVATE-NONPROFIT</td>
+      <td>6</td>
+      <td>12819.5</td>
+      <td>Q40607AY</td>
+      <td>2006</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Lastly, information about how much tutition is for each institution is needed. This data is provided by <a href="https://catalog.data.gov/dataset/college-scorecard">College Scorecard on data.gov</a>. However, it requires an API key (<a href="https://api.data.gov/signup/">sign up here</a>) to programmatically download the data and the API is rate limited, so this step can take a while and is designed to run multiple times until the full data is collected.</p>
+<p>Need to know the tuition for each of the institutions in the <code>grant_amounts</code> dataset, so each individual excel sheet needs to be loaded into a dataframe, so we can access that field</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://api.data.gov/ed/collegescorecard/v1/schools&#39;</span>
+<span class="n">API_KEY</span> <span class="o">=</span> <span class="c1">#&#39;&lt;YOUR DATA.GOV API KEY&gt;&#39;</span>
+<span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;api_key&#39;</span><span class="p">:</span> <span class="n">API_KEY</span><span class="p">,</span>
+    <span class="s1">&#39;_per_page&#39;</span><span class="p">:</span> <span class="mi">100</span>
+<span class="p">}</span>
+<span class="n">ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">grants_df</span><span class="p">[</span><span class="s1">&#39;ope id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="n">fp</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">8</span><span class="p">]</span> <span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;data/*.json&#39;</span><span class="p">)}</span>
+
+<span class="k">for</span> <span class="n">ope_id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ope8_id&#39;</span><span class="p">:</span> <span class="n">ope_id</span><span class="p">}</span>
+    <span class="n">local_filename</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{ope_id}</span><span class="s1">_tuition_data.json&#39;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_file</span><span class="p">:</span>
+            <span class="n">out_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;error: </span><span class="si">{response.url}</span><span class="s1">, </span><span class="si">{response.status_code}</span><span class="s1">, {json.dumps(response.text)}&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;X-RateLimit-Remaining&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;stopping, over rate limit&#39;</span><span class="p">)</span>
+        <span class="k">break</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;X-RateLimit-Remaining:&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;X-RateLimit-Remaining&#39;</span><span class="p">]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Combine-the-datasets:">Combine the datasets:<a class="anchor-link" href="#Combine-the-datasets:">&#182;</a></h4><p>The grants data are in semi-regularly formatted excel spreadsheets, the code below extracts the relevant data from the sheets.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">filepaths</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*_tuition_data.json&#39;</span><span class="p">)</span>
+<span class="n">school_data</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="n">filepaths</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">infile</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;results&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;results&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;ope8_id&#39;</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">8</span><span class="p">],</span>
+                <span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">),</span>
+                <span class="s1">&#39;out_of_state_tuition&#39;</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;cost&#39;</span><span class="p">][</span><span class="s1">&#39;tuition&#39;</span><span class="p">][</span><span class="s1">&#39;out_of_state&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;in_state_tuition&#39;</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;cost&#39;</span><span class="p">][</span><span class="s1">&#39;tuition&#39;</span><span class="p">][</span><span class="s1">&#39;in_state&#39;</span><span class="p">],</span>
+            <span class="p">}</span>
+            <span class="n">school_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+<span class="n">tuition_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">school_data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ope8_id&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;out_of_state_tuition&#39;</span><span class="p">,</span> <span class="s1">&#39;in_state_tuition&#39;</span><span class="p">])</span>
+<span class="n">tuition_df</span> <span class="o">=</span> <span class="n">tuition_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ope8_id&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tuition_df</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tuition_df</span><span class="o">.</span><span class="n">ope8_id</span><span class="o">.</span><span class="n">unique</span><span class="p">()))</span>
+<span class="n">tuition_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>(91819, 4)
+4993
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[52]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ope8_id</th>
+      <th>year</th>
+      <th>out_of_state_tuition</th>
+      <th>in_state_tuition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2451</th>
+      <td>00117200</td>
+      <td>2000</td>
+      <td>23234.0</td>
+      <td>23234.0</td>
+    </tr>
+    <tr>
+      <th>13906</th>
+      <td>00204000</td>
+      <td>1996</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>71419</th>
+      <td>02331300</td>
+      <td>2003</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>38494</th>
+      <td>00393700</td>
+      <td>2015</td>
+      <td>5780.0</td>
+      <td>5780.0</td>
+    </tr>
+    <tr>
+      <th>39416</th>
+      <td>00407200</td>
+      <td>2003</td>
+      <td>13995.0</td>
+      <td>13995.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">grants_df</span> <span class="o">=</span> <span class="n">grants_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+    <span class="n">pell_grant_data</span><span class="p">[[</span><span class="s1">&#39;start_year&#39;</span><span class="p">,</span> <span class="s1">&#39;maximum_pell_grant&#39;</span><span class="p">]],</span>
+    <span class="n">left_on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;academic_year&#39;</span><span class="p">],</span>
+    <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;start_year&#39;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">grants_df</span><span class="p">[</span><span class="s1">&#39;academic_year&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">grants_df</span><span class="p">[</span><span class="s1">&#39;academic_year&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int64&#39;</span><span class="p">)</span>
+
+<span class="n">_df</span> <span class="o">=</span> <span class="n">grants_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+    <span class="n">tuition_df</span><span class="p">,</span>
+    <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span>
+    <span class="n">left_on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ope id&#39;</span><span class="p">,</span> <span class="s1">&#39;academic_year&#39;</span><span class="p">],</span>
+    <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ope8_id&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">_df</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>(65518, 15)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[53]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ope id</th>
+      <th>school</th>
+      <th>state</th>
+      <th>zip code</th>
+      <th>school type</th>
+      <th>pell grant ytd recipients</th>
+      <th>pell grant ytd disbursements</th>
+      <th>spreadsheet</th>
+      <th>academic_year</th>
+      <th>start_year</th>
+      <th>maximum_pell_grant</th>
+      <th>ope8_id</th>
+      <th>year</th>
+      <th>out_of_state_tuition</th>
+      <th>in_state_tuition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>33842</th>
+      <td>00116300</td>
+      <td>CHAFFEY COMMUNITY COLLEGE</td>
+      <td>CA</td>
+      <td>917379400</td>
+      <td>PUBLIC</td>
+      <td>8178</td>
+      <td>24161737</td>
+      <td>Q41213AY</td>
+      <td>2012</td>
+      <td>2012</td>
+      <td>5930</td>
+      <td>00116300</td>
+      <td>2012.0</td>
+      <td>6169.0</td>
+      <td>1153.0</td>
+    </tr>
+    <tr>
+      <th>48108</th>
+      <td>02606300</td>
+      <td>PAUL MITCHELL THE SCHOOL WICHITA</td>
+      <td>KS</td>
+      <td>672261321</td>
+      <td>Proprietary</td>
+      <td>136</td>
+      <td>515309</td>
+      <td>Q41415AY</td>
+      <td>2014</td>
+      <td>2014</td>
+      <td>5890</td>
+      <td>02606300</td>
+      <td>2014.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>28830</th>
+      <td>00280600</td>
+      <td>ROCHESTER INSTITUTE OF TECHNOLOGY</td>
+      <td>NY</td>
+      <td>146235608</td>
+      <td>Private-Nonprofit</td>
+      <td>4378</td>
+      <td>17252884</td>
+      <td>Q41112AY</td>
+      <td>2011</td>
+      <td>2011</td>
+      <td>6010</td>
+      <td>00280600</td>
+      <td>2011.0</td>
+      <td>32037.0</td>
+      <td>32037.0</td>
+    </tr>
+    <tr>
+      <th>5909</th>
+      <td>00161400</td>
+      <td>KAUAI COMMUNITY COLLEGE</td>
+      <td>HI</td>
+      <td>967669591</td>
+      <td>PUBLIC</td>
+      <td>173</td>
+      <td>397713</td>
+      <td>Q40708AY</td>
+      <td>2007</td>
+      <td>2007</td>
+      <td>5060</td>
+      <td>00161400</td>
+      <td>2007.0</td>
+      <td>6184.0</td>
+      <td>1552.0</td>
+    </tr>
+    <tr>
+      <th>28862</th>
+      <td>00285300</td>
+      <td>SUNY MARITIME COLLEGE</td>
+      <td>NY</td>
+      <td>104654198</td>
+      <td>Public</td>
+      <td>449</td>
+      <td>1799213</td>
+      <td>Q41112AY</td>
+      <td>2011</td>
+      <td>2011</td>
+      <td>6010</td>
+      <td>00285300</td>
+      <td>2011.0</td>
+      <td>15507.0</td>
+      <td>6457.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Preprocess:">Preprocess:<a class="anchor-link" href="#Preprocess:">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In order to transform the raw data into a state prepared for modeling, some preprocessing must occur. There are three predominant transformations: <code>calculate_average_amount()</code>, <code>convert_region()</code>, and determining the <code>grant_coverage_percent</code> based on in-state or out-of-state students, as well as the cleanup and standarization of some columns.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">_df</span> <span class="o">=</span> <span class="n">_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;school type&#39;</span><span class="p">:</span> <span class="s1">&#39;school_type&#39;</span><span class="p">})</span>
+<span class="n">_df</span> <span class="o">=</span> <span class="n">_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ope8_id&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">])</span>
+<span class="n">_df</span> <span class="o">=</span> <span class="n">_df</span><span class="p">[</span><span class="o">~</span><span class="n">_df</span><span class="p">[</span><span class="s1">&#39;pell grant ytd recipients&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s1">&#39;-&#39;</span><span class="p">])]</span>
+
+<span class="k">def</span> <span class="nf">convert_to_numeric</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+<span class="n">_df</span><span class="p">[</span><span class="s1">&#39;pell grant ytd disbursements&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_df</span><span class="p">[</span><span class="s1">&#39;pell grant ytd disbursements&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">convert_to_numeric</span><span class="p">)</span>
+<span class="n">_df</span><span class="p">[</span><span class="s1">&#39;pell grant ytd recipients&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_df</span><span class="p">[</span><span class="s1">&#39;pell grant ytd recipients&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">convert_to_numeric</span><span class="p">)</span>
+<span class="n">_df</span><span class="p">[</span><span class="s1">&#39;school_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_df</span><span class="p">[</span><span class="s1">&#39;school_type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The first transformation, <code>calculate_average_amount()</code>, calculates teh average amount of grant disbursements by dividing the total grant amount per institution per year by the total number of grant recipients per institution per year.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">calculate_average_amount</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pell grant ytd recipients&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pell grant ytd disbursements&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pell grant ytd recipients&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+
+<span class="n">_df</span><span class="p">[</span><span class="s1">&#39;avg_amount&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">calculate_average_amount</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The second transformation, <code>convert_region()</code>, determines the educational institution's geographical region by the state it's located in. This reduces feature complexity and allows for broader geographic patterns to be a identified within the model.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">state_regions</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;northeast&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CT&#39;</span><span class="p">,</span> <span class="s1">&#39;ME&#39;</span><span class="p">,</span> <span class="s1">&#39;MA&#39;</span><span class="p">,</span> <span class="s1">&#39;NH&#39;</span><span class="p">,</span> <span class="s1">&#39;RI&#39;</span><span class="p">,</span> <span class="s1">&#39;VT&#39;</span><span class="p">,</span> <span class="s1">&#39;NY&#39;</span><span class="p">,</span> <span class="s1">&#39;NJ&#39;</span> <span class="p">,</span> <span class="s1">&#39;PA&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;midwest&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;IL&#39;</span><span class="p">,</span> <span class="s1">&#39;IN&#39;</span><span class="p">,</span> <span class="s1">&#39;MI&#39;</span><span class="p">,</span> <span class="s1">&#39;OH&#39;</span><span class="p">,</span> <span class="s1">&#39;WI&#39;</span><span class="p">,</span> <span class="s1">&#39;IA&#39;</span><span class="p">,</span> <span class="s1">&#39;KS&#39;</span><span class="p">,</span> <span class="s1">&#39;MN&#39;</span><span class="p">,</span> <span class="s1">&#39;MO&#39;</span><span class="p">,</span> <span class="s1">&#39;NE&#39;</span><span class="p">,</span> <span class="s1">&#39;ND&#39;</span><span class="p">,</span> <span class="s1">&#39;SD&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;south&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;DE&#39;</span><span class="p">,</span> <span class="s1">&#39;FL&#39;</span><span class="p">,</span> <span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="s1">&#39;MD&#39;</span><span class="p">,</span> <span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="s1">&#39;SC&#39;</span><span class="p">,</span> <span class="s1">&#39;VA&#39;</span><span class="p">,</span> <span class="s1">&#39;DC&#39;</span><span class="p">,</span> <span class="s1">&#39;WV&#39;</span><span class="p">,</span> <span class="s1">&#39;AL&#39;</span><span class="p">,</span> <span class="s1">&#39;KY&#39;</span><span class="p">,</span> <span class="s1">&#39;MS&#39;</span><span class="p">,</span> <span class="s1">&#39;TN&#39;</span><span class="p">,</span> <span class="s1">&#39;AR&#39;</span><span class="p">,</span> <span class="s1">&#39;LA&#39;</span><span class="p">,</span> <span class="s1">&#39;OK&#39;</span><span class="p">,</span> <span class="s1">&#39;TX&#39;</span><span class="p">,</span> <span class="s1">&#39;PR&#39;</span><span class="p">,</span> <span class="s1">&#39;AS&#39;</span><span class="p">,</span> <span class="s1">&#39;VI&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;west&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;AZ&#39;</span><span class="p">,</span> <span class="s1">&#39;CO&#39;</span><span class="p">,</span> <span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;MT&#39;</span><span class="p">,</span> <span class="s1">&#39;NV&#39;</span><span class="p">,</span> <span class="s1">&#39;NM&#39;</span><span class="p">,</span> <span class="s1">&#39;UT&#39;</span><span class="p">,</span> <span class="s1">&#39;WY&#39;</span><span class="p">,</span> <span class="s1">&#39;AK&#39;</span><span class="p">,</span> <span class="s1">&#39;CA&#39;</span><span class="p">,</span> <span class="s1">&#39;HI&#39;</span><span class="p">,</span> <span class="s1">&#39;OR&#39;</span><span class="p">,</span> <span class="s1">&#39;WA&#39;</span><span class="p">,</span> <span class="s1">&#39;GU&#39;</span><span class="p">,</span> <span class="s1">&#39;FM&#39;</span><span class="p">,</span> <span class="s1">&#39;MH&#39;</span><span class="p">,</span> <span class="s1">&#39;MP&#39;</span><span class="p">,</span> <span class="s1">&#39;PW&#39;</span><span class="p">],</span>
+<span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">convert_region</span><span class="p">(</span><span class="n">state_abbr</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">states</span> <span class="ow">in</span> <span class="n">state_regions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">state_abbr</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">region</span>
+    <span class="k">return</span>
+
+
+<span class="n">_df</span><span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_df</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">convert_region</span><span class="p">)</span>
+<span class="n">_df</span> <span class="o">=</span> <span class="n">_df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Lastly, the final transformation required in the preprocessing step is to determine the <code>grant_coverage_percent</code> by spliting the institutional grant support by in-state and out-of-state students.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_1</span> <span class="o">=</span> <span class="n">_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()[</span><span class="n">_df</span><span class="p">[</span><span class="s1">&#39;maximum_pell_grant&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">_df</span><span class="p">[</span><span class="s1">&#39;out_of_state_tuition&#39;</span><span class="p">]]</span>
+<span class="n">df_1</span><span class="p">[</span><span class="s1">&#39;in_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">df_1</span><span class="p">[</span><span class="s1">&#39;grant_coverage_percent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_1</span><span class="p">[</span><span class="s1">&#39;avg_amount&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df_1</span><span class="p">[</span><span class="s1">&#39;out_of_state_tuition&#39;</span><span class="p">]</span>
+
+<span class="n">df_2</span> <span class="o">=</span> <span class="n">_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()[</span><span class="n">_df</span><span class="p">[</span><span class="s1">&#39;maximum_pell_grant&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">_df</span><span class="p">[</span><span class="s1">&#39;in_state_tuition&#39;</span><span class="p">]]</span>
+<span class="n">df_2</span><span class="p">[</span><span class="s1">&#39;in_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">df_2</span><span class="p">[</span><span class="s1">&#39;grant_coverage_percent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_2</span><span class="p">[</span><span class="s1">&#39;avg_amount&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df_2</span><span class="p">[</span><span class="s1">&#39;in_state_tuition&#39;</span><span class="p">]</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
+    <span class="n">df_1</span><span class="p">[[</span><span class="s1">&#39;school_type&#39;</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;in_state&#39;</span><span class="p">,</span> <span class="s1">&#39;grant_coverage_percent&#39;</span><span class="p">]],</span>
+    <span class="n">df_2</span><span class="p">[[</span><span class="s1">&#39;school_type&#39;</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;in_state&#39;</span><span class="p">,</span> <span class="s1">&#39;grant_coverage_percent&#39;</span><span class="p">]]</span>
+<span class="p">])</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;grant_coverage_percent&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;grant_coverage_percent&#39;</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>(7008, 4)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[57]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>school_type</th>
+      <th>region</th>
+      <th>in_state</th>
+      <th>grant_coverage_percent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>35645</th>
+      <td>public</td>
+      <td>midwest</td>
+      <td>True</td>
+      <td>1.374659</td>
+    </tr>
+    <tr>
+      <th>16906</th>
+      <td>public</td>
+      <td>west</td>
+      <td>True</td>
+      <td>5.160827</td>
+    </tr>
+    <tr>
+      <th>17561</th>
+      <td>public</td>
+      <td>south</td>
+      <td>True</td>
+      <td>1.686983</td>
+    </tr>
+    <tr>
+      <th>8541</th>
+      <td>public</td>
+      <td>south</td>
+      <td>False</td>
+      <td>1.049253</td>
+    </tr>
+    <tr>
+      <th>7216</th>
+      <td>public</td>
+      <td>south</td>
+      <td>True</td>
+      <td>1.838589</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Model:">Model:<a class="anchor-link" href="#Model:">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">feature_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;school_type&#39;</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;in_state&#39;</span><span class="p">]</span>
+<span class="n">target_column</span> <span class="o">=</span> <span class="s1">&#39;grant_coverage_percent&#39;</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()[</span><span class="n">feature_columns</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()[</span><span class="n">target_column</span><span class="p">]</span>
+
+<span class="n">x_train</span><span class="p">,</span> <span class="n">x_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">1337</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x_train</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_test</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>5606 1402
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([</span>
+    <span class="p">(</span><span class="s1">&#39;feature_selector&#39;</span><span class="p">,</span> <span class="n">FeatureSelector</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">feature_columns</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s1">&#39;feature_column_encoder&#39;</span><span class="p">,</span> <span class="n">MultiColumnLabelEncoder</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">feature_columns</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">,</span> <span class="n">OneHotEncoder</span><span class="p">(</span><span class="n">handle_unknown</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">sparse</span><span class="o">=</span><span class="kc">False</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s1">&#39;estimator&#39;</span><span class="p">,</span> <span class="n">RegressorWithNoise</span><span class="p">(</span>
+        <span class="n">RandomForestRegressor</span><span class="p">(</span>
+            <span class="n">n_estimators</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+            <span class="n">max_features</span><span class="o">=</span><span class="s1">&#39;sqrt&#39;</span><span class="p">,</span>
+            <span class="n">max_depth</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+            <span class="n">random_state</span><span class="o">=</span><span class="mi">1337</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">))</span>
+<span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[13]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>Pipeline(memory=None,
+         steps=[(&#39;feature_selector&#39;,
+                 FeatureSelector(columns=[&#39;school_type&#39;, &#39;region&#39;,
+                                          &#39;in_state&#39;])),
+                (&#39;feature_column_encoder&#39;,
+                 &lt;sklearn_transformers.preprocessing.MultiColumnLabelEncoder object at 0x12cf47c50&gt;),
+                (&#39;encoder&#39;,
+                 OneHotEncoder(categorical_features=None, categories=None,
+                               drop=None, dtype=&lt;class &#39;numpy.float64&#39;&gt;,
+                               handle_unknown=&#39;ignore&#39;, n_v...
+                 RegressorWithNoise(regressor=RandomForestRegressor(bootstrap=True,
+                                                                    criterion=&#39;mse&#39;,
+                                                                    max_depth=30,
+                                                                    max_features=&#39;sqrt&#39;,
+                                                                    max_leaf_nodes=None,
+                                                                    min_impurity_decrease=0.0,
+                                                                    min_impurity_split=None,
+                                                                    min_samples_leaf=1,
+                                                                    min_samples_split=2,
+                                                                    min_weight_fraction_leaf=0.0,
+                                                                    n_estimators=1000,
+                                                                    n_jobs=None,
+                                                                    oob_score=False,
+                                                                    random_state=1337,
+                                                                    verbose=0,
+                                                                    warm_start=False)))],
+         verbose=False)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">regression_report</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">encoder_step_label</span><span class="o">=</span><span class="s1">&#39;feature_column_encoder&#39;</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_test</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Accuracy:                     66.56835
+MSE                           0.667359
+RMSE                          0.816921
+RMSLE                         0.246439
+MAE                           0.570403
+R2                            0.287289
+Adj R2                        0.285722
+Median                        1.526953
+Avg absolute error (degrees)  0.570403
+
+----------------------------------------
+Feature Importances:
+region=west                   0.535032
+region=south                  0.235529
+region=midwest                0.071175
+in_state=False                0.048998
+in_state=True                 0.048195
+school_type=public            0.025314
+school_type=private-nonprofit 0.022218
+region=northeast              0.013398
+school_type=proprietary       0.000142
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+"
+width=370
+height=270
+>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>array([1.57357623, 1.53039386, 1.45738286, 1.53785178, 1.47611995])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>

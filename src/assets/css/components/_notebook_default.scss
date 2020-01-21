@@ -1,0 +1,135 @@
+@import 'colors.scss';
+
+#notebook {
+  border: 3px solid black;
+  padding: 1.5rem 0.5rem 0.5rem 0.5rem;
+  margin-top: 4rem;
+  margin-bottom: 2rem;
+}
+
+div#notebook-container {
+  padding-left: 0;
+  padding-bottom: 2rem;
+}
+
+.cell {
+  h1, h2, h3 {
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.017em;
+    font-size: 1.5rem;
+    padding-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  h4 {
+    padding-top: 1rem;
+    font-size: 1.3rem;
+  }
+}
+
+.cell.border-box-sizing {
+    padding-left: 0;
+}
+
+div.prompt {
+  min-width: 12ex;
+  padding: 0.4em;
+  margin: 0px;
+  font-family: monospace;
+  text-align: right;
+  line-height: 1.21429em;
+}
+
+div.cell {
+  box-orient: vertical;
+  box-align: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-radius: 2px;
+  box-sizing: border-box;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
+  width: 100%;
+  padding: 5px;
+  margin: 0px;
+  outline: none;
+  position: relative;
+  overflow: visible;
+}
+
+div.cell:before {
+  position: absolute;
+  display: block;
+  top: -1px;
+  left: -1px;
+  width: 5px;
+  height: calc(100% + 2px);
+  content: '';
+  background: transparent;
+}
+
+.border-box-sizing {
+  box-sizing: border-box;
+}
+
+.prompt {
+  min-width: 14ex;
+  padding: 0.4em;
+  margin: 0px;
+  font-size: 12px;
+  font-family: monospace;
+  text-align: right;
+  line-height: 1.21429em;
+  user-select: none;
+  cursor: default;
+}
+
+pre {
+  display: block;
+  padding: 8.5px;
+  margin: 0 0 9px;
+  font-size: 12px;
+  line-height: 1.42857143;
+  word-break: break-all;
+  word-wrap: break-word;
+  color: #333333;
+}
+
+code {
+  color: $black;
+  font-weight: bold;
+}
+
+pre code {
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+  white-space: pre;
+  background-color: transparent;
+  border-radius: 0;
+}
+
+.pre-scrollable {
+  max-height: 340px;
+  overflow-y: scroll;
+}
+
+.highlight {
+  background: #f8f8f8;
+}
+
+a.anchor-link:link {
+  text-decoration: none;
+  padding: 0px 20px;
+  visibility: hidden;
+}
+
+.text_cell_render.border-box-sizing.rendered_html p {
+  font-size: 14px;
+}
+
+.text_cell_render>h2, .text_cell_render>h3 {
+  margin-bottom: 0;
+}

@@ -1,0 +1,49 @@
+@import 'colors.scss';
+
+.part-left {
+  border-top: 3px solid $black;
+  border-bottom: 3px solid $black;
+  border-left: 3px solid $black;
+}
+
+.part-middle {
+  border-top: 3px solid $black;
+  border-bottom: 3px solid $black;
+  border-left: 1px solid gray;
+  border-right: 1px solid gray;
+}
+
+.part-right {
+  border-top: 3px solid $black;
+  border-bottom: 3px solid $black;
+  border-right: 3px solid $black;
+}
+
+.hover-shadow {
+  transition: box-shadow .3s;
+  -webkit-box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .075);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .075);
+
+  &:hover {
+    opacity: 1;
+    text-decoration: none;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+  }
+}
+
+.part-top {
+  border-top: 3px solid black;
+  border-right: 3px solid black;
+  border-left: 3px solid black;
+  border-bottom: 1px solid black;
+}
+
+.part-bottom {
+  border-bottom: 3px solid black;
+  border-right: 3px solid black;
+  border-left: 3px solid black;
+}
+
+.part-border-bottom {
+  border-bottom: 1px solid black;
+}

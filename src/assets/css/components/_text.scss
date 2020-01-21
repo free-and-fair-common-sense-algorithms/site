@@ -1,0 +1,142 @@
+@import 'colors.scss';
+
+// @font-face {
+//   font-family: 'Inter';
+//   font-style:  normal;
+//   font-weight: 400;
+//   font-display: swap;
+//   unicode-range: U+000-5FF;
+//   src: url('./../fonts/Inter-Regular.woff2') format('woff2'),
+//        url('./../fonts/Inter-Regular.woff') format('woff');
+// }
+// @font-face {
+//   font-family: 'Inter';
+//   font-style:  normal;
+//   font-weight: 500;
+//   font-display: swap;
+//   unicode-range: U+000-5FF;
+//   src: url('./../fonts/Inter-Medium.woff2') format('woff2'),
+//        url('./../fonts/Inter-Medium.woff') format('woff');
+// }
+// @font-face {
+//   font-family: 'Inter';
+//   font-style:  normal;
+//   font-weight: 600;
+//   font-display: swap;
+//   unicode-range: U+000-5FF;
+//   src: url('./../fonts/Inter-SemiBold.woff2') format('woff2'),
+//        url('./../fonts/Inter-SemiBold.woff') format('woff');
+// }
+// @font-face {
+//   font-family: 'Inter';
+//   font-style:  normal;
+//   font-weight: 700;
+//   font-display: swap;
+//   unicode-range: U+000-5FF;
+//   src: url('./../fonts/Inter-Bold.woff2') format('woff2'),
+//        url('./../fonts/Inter-Bold.woff') format('woff');
+// }
+//
+// html {
+//   font-family: 'Inter', sans-serif;
+// }
+
+$enable-responsive-font-sizes: true;
+@import url('https://rsms.me/inter/inter.css');
+@supports (font-variation-settings: normal) {
+  html { font-family: 'Inter var', sans-serif; }
+}
+
+h1 {
+  letter-spacing: -0.0168158em;
+  font-weight: 200;
+  margin-bottom: 1.2rem;
+}
+
+h3 {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+h4 {
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.017em;
+}
+
+h5 {
+  font-weight: 700;
+}
+
+.subhead {
+  font-size: 1.6rem;
+}
+
+.description {
+  p {
+    font-size: 1.2rem;
+    letter-spacing: -0.011em;
+  }
+}
+
+a {
+  color: inherit;
+  &:hover {
+    color: inherit;
+    opacity: 0.7;
+    text-decoration: none;
+    transition: opacity .1s ease-out;
+  }
+}
+
+p > a {
+  color: $black;
+  background-color: transparent;
+  -webkit-text-decoration-skip: objects;
+  text-decoration: none;
+  transition: opacity .1s ease-out;
+
+  &:hover {
+    color: $black;
+    text-decoration: none;
+  }
+}
+
+.text-muted {
+  color: inherit!important;
+  opacity: 0.6 !important;
+}
+
+.display-3 {
+  font-weight: 600;
+}
+
+.display-4 {
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.description {
+  font-size: 1.2rem;
+  letter-spacing: -0.011em;
+}
+
+.arrow-container {
+  height: 100%;
+  width: 100%;
+}
+
+.arrow-outline {
+  width: 65%;
+  height: 100%;
+  display: block;
+  margin: auto;
+}
+
+.dashed {
+  padding-left: 1rem;
+  text-indent: -0.75rem;
+  &:before {
+    content: "- ";
+  }
+}

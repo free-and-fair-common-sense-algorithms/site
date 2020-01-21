@@ -1,0 +1,65 @@
+@import 'colors.scss';
+
+div.output_area pre, div.output_wrapper, div.prompt {
+  font-family: 'Office Code Pro D', monospace !important;
+  font-size: 12px;
+}
+
+div.output_wrapper {
+  position: relative;
+  box-orient: vertical;
+  box-align: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  z-index: 1;
+}
+.output {
+  box-orient: vertical;
+  box-align: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+div.output_area {
+  padding: 0px;
+  page-break-inside: avoid;
+  box-orient: horizontal;
+  box-align: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  border-left: 1px solid $gray4;
+  border-right: 1px solid $gray4;
+
+  pre {
+    margin: 0;
+    padding: 1px 0 1px 0;
+    border: 0;
+    vertical-align: baseline;
+    color: black;
+    background-color: transparent;
+    border-radius: 0;
+  }
+}
+
+div.output_prompt {
+  color: $black;
+}
+div.output_text {
+  text-align: left;
+  color: #000;
+  line-height: 1.21429em;
+}
+
+div.output_subarea {
+  overflow-x: auto;
+  padding: 0.4em;
+  box-flex: 1;
+  flex: 1;
+}
+
+.output_subarea.output_stream.output_stderr.output_text {
+    display: none;
+}

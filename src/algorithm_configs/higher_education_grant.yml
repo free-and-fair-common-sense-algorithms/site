@@ -1,0 +1,24 @@
+description: The Higher Education Grant Algorithm helps government officials to calculate the award amount for applicants of federal grant funding. The amount is calculated based on relevant information about the school and the tuition amount.
+form:
+  In State:
+  - False
+  - True
+  Region:
+  - Midwest
+  - Northeast
+  - South
+  - West
+  School Type:
+  - Private-Nonprofit
+  - Proprietary
+  - Public
+form_label: Enter school information
+form_submit: Calculate Grant Amount
+last_updated: January 5, 2020
+modal_label: Grant award amount
+name: Higher Education Grant Algorithm
+notebook: Higher Education Grant Algorithm.ipynb
+training_data:
+  College Scorecard: https://catalog.data.gov/dataset/college-scorecard
+  'Federal Student Aid: Title IV Program Volume Reports': https://studentaid.ed.gov/sa/about/data-center/student/title-iv
+  Sources of Grant Aid for Full-Time Undergraduates by Sector, 2011-12: https://trends.collegeboard.org/content/sources-grant-aid-full-time-undergraduates-sector-2011-12

@@ -1,0 +1,20 @@
+@import 'colors.scss';
+
+nav.navbar {
+  background-color: $white;
+  padding: 0;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: -0.0109001em;
+}
+
+.navbar-nav .dropdown-menu {
+  border-top: none;
+}
+
+li.list-group-item {
+  border: none;
+  padding: 0 0 0 3.5rem;
+}

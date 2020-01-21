@@ -1,0 +1,12 @@
+.contents {
+  justify-content: center;
+}
+
+.grid {
+  list-style-type: none;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+}

@@ -1,0 +1,10 @@
+.DS_Store
+*__pycache__
+*.csv
+*.tar.gz
+*.zip
+DEPLOYMENT.md
+dist
+node_modules
+package-lock.json
+update_prod_site.sh

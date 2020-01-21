@@ -1,0 +1,36 @@
+.rendered_html {
+  color: #000;
+}
+
+.text_cell.rendered .rendered_html {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+div.text_cell {
+  font-family: 'Inter', sans-serif;
+  box-orient: horizontal;
+  box-align: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+div.text_cell_render {
+  outline: none;
+  resize: none;
+  width: inherit;
+  border-style: none;
+  padding: 0.5em 0.5em 0.5em 0.4em;
+  color: #000;
+  box-sizing: border-box;
+
+  a {
+    text-decoration: underline;
+    font-size: 14px;
+  }
+  li {
+    font-size: 14px;
+    padding-bottom: 0.5rem;
+  }
+}

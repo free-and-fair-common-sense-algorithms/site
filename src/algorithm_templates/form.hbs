@@ -1,0 +1,29 @@
+<div class="row">
+    <div class="part-top col-12 offset-0 col-sm-8 offset-sm-2 p-4">
+      <h4 class="pb-4">{{ form_label }}:</h4>
+      <form id="algorithm-form" class="needs-validation" data-algorithm-name="{{ filename }}" novalidate>
+        {{#each form as |field_options field|}}
+        <fieldset class="form-group">
+          <div class="row">
+            <legend class="col-form-label col-sm-3">{{ field }}</legend>
+            <div class="col-sm-9">
+              <select class="custom-select form-control form-control-lg" id='{{ field }}' name="{{ field }}" required>
+                {{#each field_options as |value label|}}
+                <option value="{{ value }}">{{ value }}</option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        </fieldset>
+        {{/each}}
+        <button id='submit-btn' class="btn btn-primary btn-lg btn-block mt-5 mb-5 hover-shadow" type="submit">{{ form_submit }}</button>
+      </form>
+    </div>
+</div>
+<div class="row">
+    <div class="part-bottom col-12 offset-0 col-sm-8 offset-sm-2 information-section p-4">
+      <p>
+        <span class="font-weight-bold">Last Updated:</span> {{ last_updated }}
+      </p>
+    </div>
+</div>

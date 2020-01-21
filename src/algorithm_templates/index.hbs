@@ -1,0 +1,39 @@
+{{> ../partials/head }}
+
+<body>
+
+{{> ../partials/nav }}
+
+<div class="container mb-5 pb-2">
+{{> head }}
+<div class="container">
+{{> form }}
+
+<div class="row">
+<div class="col-12 offset-0 col-sm-8 offset-sm-2" id="notebook">
+<div class="container">
+  <h3 class="pb-1">{{ name }} Source Code:</h3>
+  <p>
+    <a href="https://github.com/free-and-fair-common-sense-algorithms/platform/blob/master/model_development/notebooks/{{ notebook }}" class="pb-1" target="_blank" rel="noopener">
+      <span>model development notebook on github →</span>
+    </a>
+  </p>
+</div>
+{{#if (eq filename 'bail_amount')}}
+{{> ../algorithm_sources/bail_amount }}
+{{else if (eq filename 'health_insurance_claim')}}
+{{> ../algorithm_sources/health_insurance_claim }}
+{{else if (eq filename 'higher_education_grant')}}
+{{> ../algorithm_sources/higher_education_grant }}
+{{/if}}
+</div>
+</div>
+
+</div>
+{{> modal }}
+</div>
+
+{{> ../partials/footer }}
+
+</body>
+</html>

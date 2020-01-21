@@ -1,0 +1,35 @@
+@import 'breakpoint.scss';
+@import 'text.scss';
+@import 'images.scss';
+@import 'logo.scss';
+@import 'nav.scss';
+@import 'form.scss';
+@import 'grid.scss';
+@import 'cards.scss';
+@import 'footer.scss';
+@import 'modal.scss';
+@import 'jumbotron.scss';
+@import 'colors.scss';
+@import 'notebook.scss';
+
+html {
+  font-size: 1rem;
+  letter-spacing: -0.00471637em;
+  line-height: 22px;
+}
+
+body {
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.004);
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  font-family: sans-serif;
+  min-height: 100vh;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  color: $black;
+  background-color: $white;
+}
+
+hr {
+  border-top: 3px solid $black;
+}

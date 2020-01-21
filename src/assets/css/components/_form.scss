@@ -1,0 +1,36 @@
+@import 'colors.scss';
+
+input {
+  border-color: $black !important;
+  border-radius: 0rem !important;
+}
+
+.custom-select {
+  border-color: $black !important;
+  border-radius: 0rem !important;
+  color: $black;
+  height: inherit;
+  text-transform: capitalize;
+}
+
+legend {
+  font-weight: bold !important;
+  text-transform: capitalize;
+}
+
+#submit-btn {
+  background-color: $black;
+  border-color: $black;
+  border-radius: 0;
+  font-size: 1.5rem;
+}
+
+.information-section {
+  >p, >a>p {
+    margin-bottom: 0.5rem;
+  }
+}
+
+#algorithm-form {
+    font-size: 1.2rem;
+}

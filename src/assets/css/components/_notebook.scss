@@ -1,0 +1,30 @@
+@import 'notebook_syntax_highlighting.scss';
+@import 'notebook_default.scss';
+@import 'notebook_text_cell.scss';
+@import 'notebook_output.scss';
+@import 'notebook_input.scss';
+@import 'notebook_table.scss';
+@import 'colors.scss';
+
+.prompt {
+    display: none;
+}
+
+.text_cell_render.border-box-sizing.rendered_html {
+    padding: 0 0 0 1rem;
+}
+
+.input .inner_cell, .output  {
+    padding-left: 1rem;
+}
+
+div.output_subarea {
+  overflow-x: auto;
+  padding: 0.4em;
+  box-flex: 1;
+  flex: 1;
+}
+
+div.output_area:last-of-type {
+    border-bottom: 1px solid $gray4;
+}

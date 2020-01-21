@@ -1,0 +1,30 @@
+<div class="modal bd-example-modal-lg" id="loading" data-backdrop="static" data-keyboard="false" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="spinner-border text-light" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="predictionModal" tabindex="-1" role="dialog" aria-labelledby="response-label-value" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content shadow-lg">
+      <div class="modal-body text-center">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12 part-border-bottom text-center p-5">
+              <h4 id="response-label-value">{{ modal_label }}</h4>
+              <h1 class="response-message font-weight-normal mb-0" id="response-message-value"></h1>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12 p-5 text-center">
+              <h4 class="text-muted mb-0" id="response-label-confidence">Algorithm Confidence</h4>
+              <h4 class="text-muted mb-0 response-message" id="response-message-confidence"></h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

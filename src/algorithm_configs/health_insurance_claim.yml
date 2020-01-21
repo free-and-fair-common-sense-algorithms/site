@@ -1,0 +1,108 @@
+description: The Health Insurance Claim Algorithm helps insurance companies to objectively determine the amount of an individual’s (the claimant) bill to be covered. The percentage amount is calculated using information related to the claimant and their treatment.
+form:
+  Claim Duration:
+  - 1 Day
+  - 2 Days
+  - 3 Days
+  - 4 Days
+  - 5 Days
+  - 6-7 Days
+  - 8-14 Days
+  - 15 Days Or More
+  Diagnosis Class:
+  - Complications Of Pregnancy, Childbirth, And The Puerperium
+  - Congenital Anomalies
+  - Diseases Of The Blood And Blood-Forming Organs
+  - Diseases Of The Circulatory System
+  - Diseases Of The Digestive System
+  - Diseases Of The Genitourinary System
+  - Diseases Of The Musculoskeletal System And Connective Tissue
+  - Diseases Of The Nervous System And Sense Organs
+  - Diseases Of The Respiratory System
+  - Diseases Of The Skin And Subcutaneous Tissue
+  - Endocrine, Nutritional And Metabolic Diseases, And Immunity Disorders
+  - External Causes Of Injury And Supplemental Classification
+  - Infectious And Parasitic Diseases
+  - Injury And Poisoning
+  - Mental Disorders
+  - Neoplasms
+  - Symptoms, Signs, And Ill-Defined Conditions
+  Gender:
+  - Female
+  - Male
+  Race:
+  - Black
+  - Hispanic
+  - Others
+  - White
+  Facility State:
+  - Alabama
+  - Alaska
+  - Arizona
+  - Arkansas
+  - California
+  - Colorado
+  - Connecticut
+  - Delaware
+  - Washington DC
+  - Florida
+  - Georgia
+  - Jawaii
+  - Idaho
+  - Illinois
+  - Indiana
+  - Iowa
+  - Kansas
+  - Kentucky
+  - Louisiana
+  - Maine
+  - Maryland
+  - Massachusetts
+  - Michigan
+  - Minnesota
+  - Mississippi
+  - Missouri
+  - Montana
+  - Nebraska
+  - Nevada
+  - New Hampshire
+  - New Jersey
+  - New Mexico
+  - New York
+  - North Carolina
+  - North Dakota
+  - Ohio
+  - Oklahoma
+  - Oregon
+  - Pennsylvania
+  - Rhode Island
+  - South Carolina
+  - South Dakota
+  - Tennessee
+  - Texas
+  - Utah
+  - Vermont
+  - Virginia
+  - Washington
+  - West Virginia
+  - Wisconsin
+  - Wyoming
+  - Puerto Rico
+  Age Range:
+  - 20-30
+  - 30-40
+  - 40-50
+  - 50-60
+  - 60-70
+  - 70-80
+  - 80-90
+  - 90-100
+  - 100-110
+form_label: Enter information
+form_submit: Calculate Coverage Percent
+last_updated: January 5, 2020
+modal_label: Amount of claim coverage
+name: Health Insurance Claims Algorithm
+notebook: Health Insurance Claims Algorithm.ipynb
+training_data:
+  CMS 2008-2010 Data Entrepreneurs’ Synthetic Public Use File (DE-SynPUF): https://www.cms.gov/Research-Statistics-Data-and-Systems/Downloadable-Public-Use-Files/SynPUFs/DE_Syn_PUF.html

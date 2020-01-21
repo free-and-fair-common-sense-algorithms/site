@@ -1,0 +1,45 @@
+description: The Bail Amount Algorithm assists court officers in objectively determining the dollar amount bail should be set at according to relevant information about the defendant. It can be used in conjunction with a risk assessment algorithm or independently.
+form:
+  Age Group:
+  - 18–24
+  - 25–34
+  - 35–44
+  - 45–54
+  - 55–64
+  - 65+
+  - <17
+  Crime Class:
+  - Felony
+  - Misdemeanor
+  - Unknown
+  Detainer:
+  - Consecutive Sentence
+  - Do Not Release
+  - Federal
+  - Governor Warrant
+  - Immigration
+  - Special Parole
+  - State
+  - Unknown
+  Gender:
+  - Female
+  - Male
+  Offense Class:
+  - A
+  - B
+  - C
+  - D
+  Race:
+  - Asian
+  - Black
+  - Hispanic
+  - Native American
+  - White
+form_label: Enter defendant information
+form_submit: Calculate Bail Amount
+last_updated: January 5, 2020
+modal_label: Bail amount to be set at
+name: Bail Amount Algorithm
+notebook: Bail Amount Algorithm.ipynb
+training_data:
+  'Connecticut Department of Correction: Accused Pre-Trial Inmates in Correctional Facilities': https://data.ct.gov/api/views/b674-jy6w/rows.csv?accessType=DOWNLOAD
