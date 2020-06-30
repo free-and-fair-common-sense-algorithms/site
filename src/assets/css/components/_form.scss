@@ -1,14 +1,14 @@
 @import 'colors.scss';
 
 input {
-  border-color: $black !important;
+  border-color: $primary !important;
   border-radius: 0rem !important;
 }
 
 .custom-select {
-  border-color: $black !important;
+  border-color: $primary !important;
   border-radius: 0rem !important;
-  color: $black;
+  color: $primary;
   height: inherit;
   text-transform: capitalize;
 }
@@ -19,8 +19,8 @@ legend {
 }
 
 #submit-btn {
-  background-color: $black;
-  border-color: $black;
+  background-color: $primary;
+  border-color: $primary;
   border-radius: 0;
   font-size: 1.5rem;
 }

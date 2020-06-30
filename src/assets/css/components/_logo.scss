@@ -3,11 +3,14 @@
   max-width: 72vw;
 }
 
-svg.logo {
-  padding-right: 1rem;
-  padding-top: 0.5rem;
-  margin-left: -0.5rem;
-  width: 3rem;
+svg {
+  fill: $primary;
+  &.logo {
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    margin-left: -0.5rem;
+    width: 3rem;
+  }
 }
 
 
@@ -20,4 +23,8 @@ svg.logo {
 #logo-nav {
   border: none;
   width: 2rem;
+}
+
+.st0 {
+  fill: $white;
 }

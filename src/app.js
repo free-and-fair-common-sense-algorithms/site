@@ -4,6 +4,7 @@ import $ from 'jquery'
 import * as handlers from './handlers'
 import { format } from './utils'
 import logoSource from './assets/images/logo.svg'
+import logoImageSource from './assets/images/logo_image.svg'
 
 const env = process.env.NODE_ENV || 'development'
 window.jQuery = $
@@ -12,6 +13,7 @@ window.$ = $
 // -- IMAGES ----------------------------------------------
 $('#logo').html(logoSource)
 $('#logo-nav').html(logoSource)
+$('#logo_image').html(logoImageSource)
 
 // -- FORM HANDLING ---------------------------------------
 

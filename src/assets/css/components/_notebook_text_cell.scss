@@ -1,5 +1,5 @@
 .rendered_html {
-  color: #000;
+  color: $primary;
 }
 
 .text_cell.rendered .rendered_html {
@@ -22,7 +22,7 @@ div.text_cell_render {
   width: inherit;
   border-style: none;
   padding: 0.5em 0.5em 0.5em 0.4em;
-  color: #000;
+  color: $primary;
   box-sizing: border-box;
 
   a {

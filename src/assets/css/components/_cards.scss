@@ -1,22 +1,22 @@
 @import 'colors.scss';
 
 .part-left {
-  border-top: 3px solid $black;
-  border-bottom: 3px solid $black;
-  border-left: 3px solid $black;
+  border-top: 3px solid $primary;
+  border-bottom: 3px solid $primary;
+  border-left: 3px solid $primary;
 }
 
 .part-middle {
-  border-top: 3px solid $black;
-  border-bottom: 3px solid $black;
-  border-left: 1px solid gray;
-  border-right: 1px solid gray;
+  border-top: 3px solid $primary;
+  border-bottom: 3px solid $primary;
+  border-left: 1px solid $secondary;
+  border-right: 1px solid $secondary;
 }
 
 .part-right {
-  border-top: 3px solid $black;
-  border-bottom: 3px solid $black;
-  border-right: 3px solid $black;
+  border-top: 3px solid $primary;
+  border-bottom: 3px solid $primary;
+  border-right: 3px solid $primary;
 }
 
 .hover-shadow {
@@ -32,18 +32,18 @@
 }
 
 .part-top {
-  border-top: 3px solid black;
-  border-right: 3px solid black;
-  border-left: 3px solid black;
-  border-bottom: 1px solid black;
+  border-top: 3px solid $primary;
+  border-right: 3px solid $primary;
+  border-left: 3px solid $primary;
+  border-bottom: 1px solid $primary;
 }
 
 .part-bottom {
-  border-bottom: 3px solid black;
-  border-right: 3px solid black;
-  border-left: 3px solid black;
+  border-bottom: 3px solid $primary;
+  border-right: 3px solid $primary;
+  border-left: 3px solid $primary;
 }
 
 .part-border-bottom {
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid $primary;
 }

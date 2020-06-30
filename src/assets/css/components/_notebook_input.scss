@@ -19,14 +19,14 @@ div.input {
 }
 
 div.input_prompt {
-  color: $black;
+  color: $primary;
   border-top: 1px solid transparent;
 }
 
 div.input_area {
   border-radius: 0px;
-  border: 1px solid #dadada;
-  background: #FBFBFB;
+  border: 1px solid lighten($primary, 40%);
+  background: $faint;
   line-height: 1.21429em;
 }
 

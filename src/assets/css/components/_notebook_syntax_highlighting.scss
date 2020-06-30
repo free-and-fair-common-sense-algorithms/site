@@ -1,21 +1,22 @@
 @import 'colors.scss';
 
 .highlight  { background: #f8f8f8; }
-.highlight .nn { color: $black; } /* Name.Namespace */
-.highlight .k { color: $black; font-weight: bold; } /* Keyword */
-.highlight .kn { color: $black; font-weight: bold; } /* Keyword.Namespace */
-.highlight .nb { color: $black; } /* Name.Builtin */
-.highlight .nf { color: $black; font-weight: bold; } /* Name.Function */
-.highlight .ow { color: $black; font-weight: bold; } /* Operator.Word */
-.highlight .kc { color: $black; font-weight: bold; } /* Keyword.Constant */
-.highlight .c1 { color: $gray2; font-style: italic; } /* Comment.Single */
-.highlight .s1 { color: $gray3; } /* Literal.String.Single */
-.highlight .si { color: $gray3; } /* Literal.String.Interpol */
+.highlight .nn { color: $primary; } /* Name.Namespace */
+.highlight .k { color: $primary; font-weight: bold; } /* Keyword */
+.highlight .kn { color: $primary; font-weight: bold; } /* Keyword.Namespace */
+.highlight .nb { color: $primary; } /* Name.Builtin */
+.highlight .nf { color: $primary; font-weight: bold; } /* Name.Function */
+.highlight .ow { color: $primary; font-weight: bold; } /* Operator.Word */
+.highlight .kc { color: $primary; font-weight: bold; } /* Keyword.Constant */
+.highlight .c1 { color: $primary_light; font-style: italic; } /* Comment.Single */
+.highlight .s1 { color: $primary_light; } /* Literal.String.Single */
+.highlight .si { color: $primary_light; } /* Literal.String.Interpol */
+.highlight .mi { color: $primary_light } /* Literal.Number.Integer */
+.highlight .o { color: $primary_light } /* Operator */
 //
 .highlight .hll { background-color: #ffffcc }
 .highlight .c { color: #408080; font-style: italic } /* Comment */
 .highlight .err { border: 1px solid #FF0000 } /* Error */
-.highlight .o { color: #666666 } /* Operator */
 .highlight .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
 .highlight .cm { color: #408080; font-style: italic } /* Comment.Multiline */
 .highlight .cp { color: #BC7A00 } /* Comment.Preproc */
@@ -50,7 +51,6 @@
 .highlight .mb { color: #666666 } /* Literal.Number.Bin */
 .highlight .mf { color: #666666 } /* Literal.Number.Float */
 .highlight .mh { color: #666666 } /* Literal.Number.Hex */
-.highlight .mi { color: #666666 } /* Literal.Number.Integer */
 .highlight .mo { color: #666666 } /* Literal.Number.Oct */
 .highlight .sa { color: $gray3 } /* Literal.String.Affix */
 .highlight .sb { color: $gray3 } /* Literal.String.Backtick */

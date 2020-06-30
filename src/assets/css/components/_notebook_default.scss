@@ -1,7 +1,7 @@
 @import 'colors.scss';
 
 #notebook {
-  border: 3px solid black;
+  border: 3px solid $primary;
   padding: 1.5rem 0.5rem 0.5rem 0.5rem;
   margin-top: 4rem;
   margin-bottom: 2rem;
@@ -94,11 +94,11 @@ pre {
   line-height: 1.42857143;
   word-break: break-all;
   word-wrap: break-word;
-  color: #333333;
+  color: $primary_light;
 }
 
 code {
-  color: $black;
+  color: $primary;
   font-weight: bold;
 }
 
@@ -117,7 +117,7 @@ pre code {
 }
 
 .highlight {
-  background: #f8f8f8;
+  background: $faint;
 }
 
 a.anchor-link:link {

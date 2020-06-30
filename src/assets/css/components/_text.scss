@@ -1,46 +1,5 @@
 @import 'colors.scss';
 
-// @font-face {
-//   font-family: 'Inter';
-//   font-style:  normal;
-//   font-weight: 400;
-//   font-display: swap;
-//   unicode-range: U+000-5FF;
-//   src: url('./../fonts/Inter-Regular.woff2') format('woff2'),
-//        url('./../fonts/Inter-Regular.woff') format('woff');
-// }
-// @font-face {
-//   font-family: 'Inter';
-//   font-style:  normal;
-//   font-weight: 500;
-//   font-display: swap;
-//   unicode-range: U+000-5FF;
-//   src: url('./../fonts/Inter-Medium.woff2') format('woff2'),
-//        url('./../fonts/Inter-Medium.woff') format('woff');
-// }
-// @font-face {
-//   font-family: 'Inter';
-//   font-style:  normal;
-//   font-weight: 600;
-//   font-display: swap;
-//   unicode-range: U+000-5FF;
-//   src: url('./../fonts/Inter-SemiBold.woff2') format('woff2'),
-//        url('./../fonts/Inter-SemiBold.woff') format('woff');
-// }
-// @font-face {
-//   font-family: 'Inter';
-//   font-style:  normal;
-//   font-weight: 700;
-//   font-display: swap;
-//   unicode-range: U+000-5FF;
-//   src: url('./../fonts/Inter-Bold.woff2') format('woff2'),
-//        url('./../fonts/Inter-Bold.woff') format('woff');
-// }
-//
-// html {
-//   font-family: 'Inter', sans-serif;
-// }
-
 $enable-responsive-font-sizes: true;
 @import url('https://rsms.me/inter/inter.css');
 @supports (font-variation-settings: normal) {
@@ -90,14 +49,14 @@ a {
 }
 
 p > a {
-  color: $black;
+  color: $primary;
   background-color: transparent;
   -webkit-text-decoration-skip: objects;
   text-decoration: none;
   transition: opacity .1s ease-out;
 
   &:hover {
-    color: $black;
+    color: $primary;
     text-decoration: none;
   }
 }
@@ -131,6 +90,10 @@ p > a {
   height: 100%;
   display: block;
   margin: auto;
+
+  & path {
+    stroke: $primary !important;
+  }
 }
 
 .dashed {
@@ -139,4 +102,9 @@ p > a {
   &:before {
     content: "- ";
   }
+}
+
+.form-control {
+    color: $primary !important;
+    border: 1px solid $primary !important;
 }
