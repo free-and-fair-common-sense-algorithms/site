@@ -2,7 +2,6 @@ import $ from 'jquery'
 import * as format from './formatters'
 import { getMaxKey, getRandomInt, convertNum } from './utils'
 
-// const self = this
 const animateNumber = (startNum, endNum, selector, formatter) => {
     $({ num: startNum }).animate({ num: endNum }, {
         duration: 500,
@@ -25,6 +24,8 @@ export default {
         const endNum = convertNum(text)
         const startNum = getRandomInt(500, 50000)
         const selector = $('#response-message-value')
+        $('#api-error').remove()
+        $('#response-label-value').show()
         $('#response-message-value').text(format.dollar(startNum))
         $('#response-message-confidence').text(format.percent4(value))
         animateNumber(startNum, endNum, selector, format.dollar)
@@ -36,6 +37,8 @@ export default {
         const startNum = 0
         const endNum = convertNum(text) / 100
         const selector = $('#response-message-value')
+        $('#api-error').remove()
+        $('#response-label-value').show()
         $('#response-message-value').text(format.percent2(startNum))
         $('#response-message-confidence').text(format.percent4(value))
         animateNumber(startNum, endNum, selector, format.percent2)
@@ -45,12 +48,16 @@ export default {
         const value = (Number(num) * res)
         const selector = $('#response-message-value')
         animateNumber(0, value, selector, format.dollar)
+        $('#api-error').remove()
+        $('#response-label-value').show()
         $('#response-message-value').text(0)
         $('#response-label-confidence').parent().parent().hide()
     },
     error: (error) => {
         showModal()
-        $('#response-label-value').html(`Error with prediction:<br>${error}`)
+        $('#response-label-value').hide()
+        $('#api-error').remove()
+        $('#response').append(`<div id='api-error'><h4>Error with prediction.</h4><br><a href='https://github.com/free-and-fair-common-sense-algorithms/site/issues/new?body=%0A%0A[describe your issue here]%0A---%0AError:\`${error}\`' target='_blank' style='font-size:1rem;'><u>Please file an issue here</u> →</a></div>`)
         $('#response-message-value').text('')
         $('#response-label-confidence').parent().parent().hide()
     },

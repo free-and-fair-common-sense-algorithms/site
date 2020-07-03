@@ -1,4 +1,4 @@
-description: The Bail Amount Algorithm assists court officers in objectively determining the dollar amount bail should be set at according to relevant information about the defendant. It can be used in conjunction with a risk assessment algorithm or independently.
+description: The Bail Amount Algorithm assists judges by objectively determining the amount bail should be set at based on relevant information about the defendant. It can be used in conjunction with a risk assessment algorithm or independently.
 form:
   Age Group:
   - 18–24

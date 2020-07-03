@@ -1,4 +1,4 @@
-description: The Health Insurance Claim Algorithm helps insurance companies to objectively determine the amount of an individual’s (the claimant) bill to be covered. The percentage amount is calculated using information related to the claimant and their treatment.
+description: The Health Insurance Claim Algorithm helps insurance companies determine the percentage of an individual’s (the claimant) hospital bill they should cover. The percentage amount is calculated using information related to the claimant and their treatment.
 form:
   Claim Duration:
   - 1 Day

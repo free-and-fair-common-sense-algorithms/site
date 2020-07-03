@@ -16,7 +16,6 @@ $('#logo-nav').html(logoSource)
 $('#logo_image').html(logoImageSource)
 
 // -- FORM HANDLING ---------------------------------------
-
 const BASE_URL = env === 'development' ? 'http://localhost:5000/' : 'https://api.free-and-fair-common-sense-algorithms-for-society.org/'
 
 const shuffleOptions = () => {

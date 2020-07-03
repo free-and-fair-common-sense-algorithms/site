@@ -34,17 +34,17 @@ const pages = {
                     {
                         name: 'Bail Amount Algorithm',
                         filename: 'bail_amount',
-                        description: 'The Bail Amount Algorithm assists court officers in objectively determining the amount of bail based on information about the defendant.',
+                        description: 'The Bail Amount Algorithm assists judges by objectively determining the amount bail should be set at based on information about the defendant.',
                     },
                     {
                         name: 'Health Insurance Claim Algorithm',
                         filename: 'health_insurance_claim',
-                        description: 'The Health Insurance Claim Algorithm helps insurance companies determine the percent coverage of an individual’s hospital bill.',
+                        description: 'The Health Insurance Claim Algorithm helps insurance companies determine the percentage of an individual’s hospital bill they should cover.',
                     },
                     {
                         name: 'Higher Education Grant Algorithm',
                         filename: 'higher_education_grant',
-                        description: 'The Higher Education Grant Algorithm helps calculate the amount that should be awarded to applicants of Federal grant funding.',
+                        description: 'The Higher Education Grant Algorithm helps officials calculate the amount of Federal grant funding to be awarded to student applicants.',
                     },
                 ],
             },

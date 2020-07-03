@@ -1,4 +1,4 @@
-description: The Higher Education Grant Algorithm helps government officials to calculate the award amount for applicants of federal grant funding. The amount is calculated based on relevant information about the school and the tuition amount.
+description: The Higher Education Grant Algorithm helps officials calculate the amount of Federal grant funding to be awarded to student applicants. The amount is calculated based on relevant information about the school and the tuition amount.
 form:
   In State:
   - False
