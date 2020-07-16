@@ -57,7 +57,8 @@ export default {
         showModal()
         $('#response-label-value').hide()
         $('#api-error').remove()
-        $('#response').append(`<div id='api-error'><h4>Error with prediction.</h4><br><a href='https://github.com/free-and-fair-common-sense-algorithms/site/issues/new?body=%0A%0A[describe your issue here]%0A---%0AError:\`${error}\`' target='_blank' style='font-size:1rem;'><u>Please file an issue here</u> →</a></div>`)
+        $('#response').append('<div id="api-error"><h4>There was an error with the calculation.</h4>')
+        console.error(`Error with prediction: ${error} \nFile an issue here if this persists: https://github.com/free-and-fair-common-sense-algorithms/site/issues/new?body=%0A%0A[describe your issue here]%0A---%0AError:\`${error}\``)
         $('#response-message-value').text('')
         $('#response-label-confidence').parent().parent().hide()
     },

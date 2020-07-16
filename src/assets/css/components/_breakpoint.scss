@@ -1,5 +1,5 @@
 @import 'colors.scss';
-@include media-breakpoint-down(xs) {
+@include media-breakpoint-down(sm) {
 
   html {
     font-size: 10pt !important;
@@ -18,6 +18,9 @@
     padding-bottom: 0rem !important;
   }
 
+  .arrow-container {
+    padding: 1rem;
+  }
 
   .part-left {
     border-top: 3px solid $primary !important;
@@ -54,5 +57,11 @@
         stroke-width: 2px !important;
       }
     }
+  }
+}
+
+@include media-breakpoint-down(md) {
+  .container {
+    max-width: 90%;
   }
 }
